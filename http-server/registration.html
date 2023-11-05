@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Registration Form
+        </title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-teal-400">
+        <div class="flex h-screen justify-center items-center" id="main">
+            <div class="grid place-items-center p-20 max-w-md mx-auto bg-slate-100 rounded-3xl overflow-hidden shadow-md md:max-w-2xl text-2xl">
+                <p class="justify-center font-bold text-3xl">Registration Form</p>
+                <br>
+                <form class="space-y-5" id="form">
+                    <div id="input">
+                    <label for="name">Name:</label><br>
+                    <input type="text" id="name" name="name" class="shadow-md bg-slate-200 rounded-lg" required><br>
+                    </div><div id="input">
+                    <label for="Email">Email:</label><br>
+                    <input type="text" id="email" name="email" placeholder="host@host.com" class="shadow-md bg-slate-200 rounded-lg" required><br>
+                    </div><div id="input">
+                    <label for="password">Password:</label><br>
+                    <input type="password" id="password" name="password" class="shadow-md bg-slate-200 rounded-lg" required ><br>
+                    </div><div id="input">
+                    <label for="dob">Date of Birth:</label><br>
+                    <input type="date" id="dob" name="dob" class="shadow-md bg-slate-200 rounded-lg" required><br>
+                    </div><div id="input">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">Accept Terms & Conditions</label><br>
+                    </div>
+                    <div class="grid mx-auto place-items-center h-10 bg-cyan-300 rounded-xl w-1/3 font-bold text-xl">
+                        <button id="submit" type="submit" class="justify-center">Submit</button>
+                    </div>
+                </form>
+            </div>
+            <div class="grid place-items-center p-20 max-w-md mx-auto bg-slate-100 rounded-3xl overflow-hidden shadow-md md:max-w-none text-2xl">
+                <table cellpadding="20" id="entry-table">
+                    <caption><b>Entries</b></caption>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Dob</th>
+                        <th>Accepted terms?</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <script src="script.js"></script>
+    </body>
+</html>
