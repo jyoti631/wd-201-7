@@ -1,115 +1,102 @@
-const express = require("express");
+var csrf = require("csurf");
+const express = require('express');
 const app = express();
-const { Todo } = require("./models");
-const bodyParser = require("body-parser");
+const { Todo } = require('./models');
+const bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
 const path = require("path");
-var csurf = require("tiny-csrf");
-var cookieParser= require("cookie-parser");
 app.use(bodyParser.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser("todo application"));
-app.use(csurf("this_should_be_32_character_long",["POST","PUT","DELETE"]));
+app.use(express.urlencoded({ extended: false }))
+app.use(cookieParser("ssh! some secret string"));
+app.use(csrf({ cookie: true }))
 
 app.set("view engine", "ejs");
+app.get("/", async (reqest, response) => {
 
-const formattedDate = (d) => {
-  return d.toISOString().split("T")[0];
-};
+    const overdue = await Todo.overdue();
+    const dueLater = await Todo.dueLater();
+    const dueToday = await Todo.dueToday();
+    const completedItems = await Todo.completedItems();
+    if (reqest.accepts("html")) {
+        response.render('index', {
 
-var dateToday = new Date();
-const today = formattedDate(dateToday);
-const yesterday = formattedDate(
-  new Date(new Date().setDate(dateToday.getDate() - 1))
-);
-const tomorrow = formattedDate(
-  new Date(new Date().setDate(dateToday.getDate() + 1))
-);
+            overdue,
+            dueLater,
+            dueToday,
+            completedItems,
+            csrfToken: reqest.csrfToken()
 
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", async function (request, response) {
-  const overdue = await Todo.overdue();
-  const dueToday=await Todo.dueToday();
-  const dueLater=await Todo.dueLater();
-  const completedItems=await Todo.completedItems();
-  if (request.accepts("html")) {
-    response.render("index",{
-        overdue,
-        dueToday,
-        dueLater,
-        completedItems,
-        csrfToken: request.csrfToken(),
-    });
-  } else {
-    response.json({
-      overdue,
-      dueToday,
-      dueLater,
-      completedItems,
-    });
-  }
+        });
+    }
+    else {
+        response.json({
+            overdue,
+            dueLater,
+            dueToday,
+            completedItems,
+        })
+    }
 });
 
-app.get("/todos", async function (_request, response) {
-  console.log("Processing list of all Todos ...");
-  // FILL IN YOUR CODE HERE
+app.use(express.static(path.join(__dirname, 'public')))
+//middileware
+app.post("/todos", async (request, response) => {
+    try {
+        console.log("creating a todo", request.body)
+        const todo = await Todo.addTodo({ title: request.body.title, dueDate: request.body.dueDate, completed: false });
+        return response.redirect("/")
 
-  // First, we have to query our PostgerSQL database using Sequelize to get list of all Todos.
-  // Then, we have to respond with all Todos, like:
-  // response.send(todos)
+    } catch (error) {
+        console.log(error);
+        return response.status(422).json(error)
+    }
 });
 
-app.get("/todos/:id", async function (request, response) {
-  try {
+app.put("/todos/:id", async (request, response) => {
+
     const todo = await Todo.findByPk(request.params.id);
-    return response.json(todo);
-  } catch (error) {
-    console.log(error);
-    return response.status(422).json(error);
-  }
+    console.log(request.params.id)
+    try {
+
+        const updatetodo = await todo.setCompletionStatus();
+        return response.json(updatetodo)
+
+    } catch (error) {
+        console.log(error);
+        return response.status(422).json(error)
+    }
+});
+app.get("/todos", async (request, response) => {
+
+    const todo = await Todo.findAll();
+    try {
+
+        return response.json(todo)
+
+    } catch (error) {
+        console.log(error);
+        return response.status(422).json(error)
+    }
+});
+app.delete("/todos/:id", async (request, response) => {
+
+
+    try {
+
+        const deleted = await Todo.destroy({
+            where: {
+                id: request.params.id
+            },
+
+        });
+        response.send(deleted ? true : false);
+
+    } catch (error) {
+        response.send(false)
+        return response.status(422).json(error)
+    }
 });
 
-app.post("/todos", async function (request, response) {
-  console.log("Creating a todo", request.body);
-  try {
-    await Todo.addTodo({
-      title: request.body.title,
-      dueDate: request.body.dueDate,
-    });
-    return response.redirect("/");
-  } catch (error) {
-    console.log(error);
-    return response.status(422).json(error);
-  }
-});
 
-app.put("/todos/:id", async function (request, response) {
-  const todo = await Todo.findByPk(request.params.id);
-  const state=request.body.completed===true?false:true;
-  try {
-    const res=await todo.setCompletionStatus(state);
-    return response.json(res);
-  } catch (error) {
-    console.log(error);
-    return response.status(422).json(error);
-  }
-});
-
-app.delete("/todos/:id", async function (request, response) {
-  console.log("We have to delete a Todo with ID: ", request.params.id);
-  // FILL IN YOUR CODE HERE
-
-  // First, we have to query our database to delete a Todo by ID.
-  // Then, we have to respond back with true/false based on whether the Todo was deleted or not.
-  // response.send(true)
-  console.log("Delete a todo by ID",request.params.id);
-  try{
-    await Todo.remove(request.params.id);
-    return response.json({success:true});
-  }
-  catch(error){
-    return response.status(422).json(error);
-  }
-});
 
 module.exports = app;
